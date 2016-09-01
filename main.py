@@ -1,27 +1,40 @@
+#Universidad del Valle de Guatemala
+#Algoritmos y estructura de Datos
+#Seccion 20
+#Ing Oscar Ivan Robles
+
+#Diego Rivera 15085
+#Enma Lopez 15122
+
+
 import simpy
 import random
 import math
 #se inicializan los debidos parametros que mas adelante se pueden cambiar
-nrProcesos=10
-semillaR= 12345
-cantRamCPU= 100
-cantCPU = 1
+nrProcesos = 200
+semillaR = 12345
+cantRamCPU = 100
+cantCPU = 2
 velocidad = 3
-espera=1
-wait=2
+espera = 1
+wait = 2
 global tiempotot 
 tiempotot = 0.0
 vector = []
 random.seed(semillaR) #se puede reproducir los mismos numeros al azar
 
+#Modulo que genera el proceso que llega al sistema operativo
 def Procesando(env,self,cantRam, instrucciones, RAM, CPU, Waiting, espera,velocidad,t):
-    #el proceso llega al sistema operativo
+    
     global tiempotot
     yield env.timeout(t)
-    tiempoStart=env.now
+    tiempoStart = env.now #Empieza a inicializar el tiempo desde que se llama
+
     print "%5.1f %s Empeiza (new)" %(tiempoStart,self)
     #hacemos un request de memoria ram, si no hay disponible debe esperar
     yield RAM.get(cantRam) 
+    #Mira cuando espacio hay en la memoria ram para ver si esta disponible
+
     print "%5.1f %s Entra a memoria ram y esta listo para correr (ready)" % (env.now,self)
     Complet =0
     while Complet< instrucciones:
@@ -45,8 +58,11 @@ def Procesando(env,self,cantRam, instrucciones, RAM, CPU, Waiting, espera,veloci
             Complet += inst_exe
             print("%5.1f %s (%d/%d) completado. (running)" % ( env.now,self, Complet, instrucciones))
 
-            #CPU.release()
+            #Genera el random de 1 y 2
         num = random.randint(1,2)
+        #Si las instrucciones y el numero generado es uno y estas dos son mayores 
+        #a 0 entonces manda a ver cuando tiempo tiene que esperar
+
         if Complet < instrucciones and num ==1:
             with Waiting.request() as req:
                     yield req
@@ -62,7 +78,7 @@ Waiting = simpy.Resource(env,capacity=wait)
 RAM= simpy.Container(env, init=cantRamCPU , capacity=cantRamCPU)
 CPU = simpy.Resource(env, capacity=cantCPU)
 
-
+#Recorre la los procesos y genera un random para cada parametro
 for i in range (nrProcesos):
     instrucciones = random.randint(1,10)
     cantRam = random.randint(1,10)
@@ -70,11 +86,10 @@ for i in range (nrProcesos):
     Final = Procesando(env, "Proceso %d" % i, cantRam, instrucciones, RAM, CPU, Waiting, espera, velocidad,t)
     env.process(Final)
     
-    #yield env.timeout(t)
 
 env.run()
 
-# Calcular promedio
+# Se calcula el rpomedio
 total = tiempotot
 print ("Tiempo total: %f" % total)
 promedio = (tiempotot / nrProcesos)
@@ -89,4 +104,3 @@ for i in vector:
 desv_Estandar = (tmp/(nrProcesos-1))**0.5
 
 print "La desviacion estandar es: ", desv_Estandar
-
